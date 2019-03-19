@@ -46,13 +46,26 @@ def interact_model(
         ckpt = tf.train.latest_checkpoint(os.path.join('models', model_name))
         saver.restore(sess, ckpt)
 
+        last_text = "oof!"
+        generated = 0
+
         while True:
-            raw_text = input("Model prompt >>> ")
-            while not raw_text:
-                print('Prompt should not be empty!')
-                raw_text = input("Model prompt >>> ")
+            raw_text = ""
+            did = False
+            while True:
+                try:
+                    intext = input("Model prompt >>> " if not did else "")
+                except EOFError:
+                    break
+                raw_text = raw_text + ("\n" if did else "") + intext
+                did = True
+            if not raw_text:
+                raw_text = last_text
+            else:
+                last_text = raw_text
+                generated = 0
+            print("=== working ===")
             context_tokens = enc.encode(raw_text)
-            generated = 0
             for _ in range(nsamples // batch_size):
                 out = sess.run(output, feed_dict={
                     context: [context_tokens for _ in range(batch_size)]
